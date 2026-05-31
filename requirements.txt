@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+openai
+youtube-transcript-api
+langchain
+tiktoken
+python-dotenv
+pydantic
+celery
+redis
