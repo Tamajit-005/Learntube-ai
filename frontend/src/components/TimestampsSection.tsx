@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
 import type { Timestamp } from "@/types";
 import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
 
@@ -23,11 +22,6 @@ export default function TimestampsSection({ timestamps }: TimestampsSectionProps
 
   return (
     <div className="card">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="w-5 h-5 text-violet-500" />
-        <h2 className="text-lg font-semibold">Timestamps</h2>
-      </div>
-
       <motion.div
         className="space-y-1"
         variants={staggerContainer}

@@ -13,6 +13,7 @@ import {
   Briefcase,
   Clock,
   FunctionSquare,
+  History,
   Menu,
   X,
 } from "lucide-react";
@@ -44,7 +45,8 @@ const mobileMenuVariants = {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { result, loading } = useAnalysis();
+  const { result, loading, hasPrevious, viewingPrevious, toggleHistory } =
+    useAnalysis();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const hasResult = !!result;
@@ -53,14 +55,21 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <GraduationCap className="w-6 h-6 text-violet-500" />
-            <span className="font-bold text-sm sm:text-base">LearnTube AI</span>
+          {/* Logo — left side */}
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 shrink-0 group -ml-2 lg:-ml-3"
+          >
+            <div className="w-8 h-8 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center transition-transform group-hover:scale-105">
+              <GraduationCap className="w-5 h-5 text-violet-500" />
+            </div>
+            <span className="font-extrabold text-base sm:text-lg tracking-tight text-gray-900 dark:text-white">
+              LearnTube AI
+            </span>
           </Link>
 
           {/* Desktop Nav / Dropdown */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-0.5">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -73,7 +82,7 @@ export default function Navbar() {
                   onClick={(e) => {
                     if (disabled) e.preventDefault();
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold tracking-tight transition-all
                     ${
                       isActive
                         ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
@@ -82,7 +91,7 @@ export default function Navbar() {
                           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
                     }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                   {item.label}
                 </Link>
               );
@@ -91,6 +100,44 @@ export default function Navbar() {
 
           {/* Right section */}
           <div className="flex items-center gap-2">
+            {/* History toggle — only show when there's a result */}
+            {hasResult && (
+              <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <button
+                  onClick={() => {
+                    if (viewingPrevious) toggleHistory();
+                  }}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
+                    ${
+                      !viewingPrevious
+                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Latest
+                </button>
+                <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                <button
+                  onClick={() => {
+                    if (!viewingPrevious && hasPrevious) toggleHistory();
+                  }}
+                  disabled={!hasPrevious}
+                  className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
+                    ${
+                      viewingPrevious
+                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shadow-sm"
+                        : !hasPrevious
+                          ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Previous
+                </button>
+              </div>
+            )}
+
             {/* Loading indicator */}
             {loading && (
               <div className="hidden md:flex items-center gap-2 text-xs text-violet-500 mr-1">
@@ -105,7 +152,11 @@ export default function Navbar() {
               className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Toggle navigation menu"
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
@@ -119,7 +170,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="md:hidden overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900"
+            className="md:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-lg"
           >
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {

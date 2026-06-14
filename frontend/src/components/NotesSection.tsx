@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FileText, Copy, Check, ListTree, BookOpen } from "lucide-react";
+import { Copy, Check, ListTree, BookOpen } from "lucide-react";
 import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
 
 interface NotesSectionProps {
@@ -65,16 +65,14 @@ export default function NotesSection({ content }: NotesSectionProps) {
 
   return (
     <div className="card">
-      {/* Header */}
+      {/* Header controls */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-violet-500" />
-          <h2 className="text-lg font-semibold">Notes</h2>
-          <span className="hidden sm:inline text-xs text-gray-400 ml-1">
-            &middot; {wordCount} words &middot; {readingTime} min read
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="text-xs text-gray-400">
+            {wordCount} words &middot; {readingTime} min read
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {sections.filter((s) => s.heading).length > 0 && (
             <button
               onClick={() => setShowToc(!showToc)}

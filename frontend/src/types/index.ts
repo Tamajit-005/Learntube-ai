@@ -30,12 +30,10 @@ export interface AnalysisResult {
 }
 
 export interface AnalyzeResponse {
-  session_id: string | null;
   result: AnalysisResult;
 }
 
 export interface SessionRecord {
-  id: string;
   url: string;
   analyzed_at: string;
   result: AnalysisResult;

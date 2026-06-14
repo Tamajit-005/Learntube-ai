@@ -1,18 +1,22 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { AnalysisResult } from "@/types";
 import type { ApiError } from "@/lib/api";
-import { analyzeVideo, getSession } from "@/lib/api";
+import { analyzeVideo, getCurrentHistory, getPreviousHistory } from "@/lib/api";
 
 interface AnalysisContextValue {
   result: AnalysisResult | null;
+  currentResult: AnalysisResult | null;
+  previousResult: AnalysisResult | null;
+  viewingPrevious: boolean;
+  hasPrevious: boolean;
   loading: boolean;
   error: ApiError | null;
-  sessionId: string | null;
   handleSubmit: (url: string) => Promise<void>;
-  restoreSession: (id: string) => Promise<void>;
+  toggleHistory: () => Promise<void>;
   clearSession: () => void;
   clearError: () => void;
 }
@@ -26,22 +30,34 @@ export function useAnalysis() {
 }
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const router = useRouter();
+  const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(null);
+  const [previousResult, setPreviousResult] = useState<AnalysisResult | null>(null);
+  const [viewingPrevious, setViewingPrevious] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // Exposed result is whichever we're viewing
+  const result = viewingPrevious ? previousResult : currentResult;
+  const hasPrevious = previousResult !== null;
 
   const handleSubmit = useCallback(async (url: string) => {
     setLoading(true);
-    setResult(null);
     setError(null);
-    setSessionId(null);
+    setViewingPrevious(false);
+
+    const prevCurrent = currentResult;
+    setCurrentResult(null);
 
     try {
       const response = await analyzeVideo(url);
-      setResult(response.result);
-      setSessionId(response.session_id);
+      setCurrentResult(response.result);
+      // Old current becomes previous — mirrors backend save_last() behavior
+      if (prevCurrent) {
+        setPreviousResult(prevCurrent);
+      }
       toast.success("Analysis complete!");
+      router.push("/notes");
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr);
@@ -49,17 +65,24 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentResult]);
 
-  const restoreSession = useCallback(async (id: string) => {
+  const toggleHistory = useCallback(async () => {
+    if (viewingPrevious) {
+      // Switch back to current — no fetch needed
+      setViewingPrevious(false);
+      return;
+    }
+
+    // Switching to previous — fetch it from backend
     setLoading(true);
     setError(null);
 
     try {
-      const record = await getSession(id);
-      setResult(record.result);
-      setSessionId(record.id);
-      toast.success("Session restored!");
+      const record = await getPreviousHistory();
+      setPreviousResult(record.result);
+      setViewingPrevious(true);
+      toast.success("Showing previous session");
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr);
@@ -69,12 +92,13 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [viewingPrevious]);
 
   const clearSession = useCallback(() => {
-    setResult(null);
+    setCurrentResult(null);
+    setPreviousResult(null);
     setError(null);
-    setSessionId(null);
+    setViewingPrevious(false);
   }, []);
 
   const clearError = useCallback(() => setError(null), []);
@@ -82,9 +106,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   return (
     <AnalysisContext.Provider
       value={{
-        result, loading, error,
-        sessionId,
-        handleSubmit, restoreSession, clearSession, clearError,
+        result, currentResult, previousResult,
+        viewingPrevious, hasPrevious,
+        loading, error,
+        handleSubmit, toggleHistory, clearSession, clearError,
       }}
     >
       {children}

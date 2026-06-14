@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Layers, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 
 interface FlashCardsSectionProps {
   content: string;
@@ -54,14 +54,10 @@ export default function FlashCardsSection({ content }: FlashCardsSectionProps) {
 
   return (
     <div className="card">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-violet-500" />
-          <h2 className="text-lg font-semibold">Flashcards</h2>
-          <span className="text-xs text-gray-400 ml-1">
-            {current + 1} / {cards.length}
-          </span>
-        </div>
+      <div className="flex items-center justify-end mb-4">
+        <span className="text-xs text-gray-400">
+          {current + 1} / {cards.length}
+        </span>
       </div>
 
       <div
