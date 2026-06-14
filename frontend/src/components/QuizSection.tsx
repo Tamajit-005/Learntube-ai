@@ -1,20 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { HelpCircle, CheckCircle, XCircle } from "lucide-react";
+import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
+import type { QuizQuestion } from "@/types";
 
 interface QuizSectionProps {
-  content: string;
+  content: string | { questions: QuizQuestion[] };
 }
 
-interface MCQ {
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-
-function parseMCQs(text: string): MCQ[] {
-  const mcqs: MCQ[] = [];
+function parseMCQs(text: string): QuizQuestion[] {
+  const mcqs: QuizQuestion[] = [];
   const blocks = text.split(/\*\*\d+\./).slice(1);
 
   for (const block of blocks) {
@@ -26,19 +23,43 @@ function parseMCQs(text: string): MCQ[] {
     let correctIndex = -1;
 
     // Pass 1: collect options (skip lines with "correct answer" to avoid false matches)
-    for (const line of lines) {
+    for (let li = 0; li < lines.length; li++) {
+      const line = lines[li];
       if (/correct\s*answer/i.test(line)) continue;
-      const optMatch = line.match(/^([A-D])\.\s*(.*)/) || line.match(/^([A-D])\)\s*(.*)/);
-      if (optMatch) {
-        options.push(optMatch[2] || optMatch[0]);
+
+      // Single-line: "A. text" or "A) text"
+      const optMatch = line.match(/^([A-Da-d])\.\s*(.*)/) || line.match(/^([A-Da-d])\)\s*(.*)/);
+      if (optMatch && optMatch[2]) {
+        options.push(optMatch[2]);
+        continue;
+      }
+
+      // Multi-line: letter on its own line, text on the next
+      if (optMatch && !optMatch[2] && li + 1 < lines.length) {
+        const next = lines[li + 1];
+        if (!/^[A-Da-d][\.\)]?\s/.test(next) && !/correct\s*answer/i.test(next)) {
+          options.push(next);
+          li++; // skip the text line we just consumed
+          continue;
+        }
+      }
+
+      // Single letter alone on line: "A" followed by text on next line
+      const letterOnly = line.match(/^([A-Da-d])$/);
+      if (letterOnly && li + 1 < lines.length) {
+        const next = lines[li + 1];
+        if (!/^[A-Da-d][\.\)]?\s/.test(next) && !/correct\s*answer/i.test(next)) {
+          options.push(next);
+          li++;
+        }
       }
     }
 
     // Pass 2: find correct answer from dedicated answer lines only
     if (options.length > 0) {
-      const answerLine = lines.find((l) => /^(?:correct\s*)?answer/i.test(l));
+      const answerLine = lines.find((l) => /^\*{0,2}\s*(?:correct\s*)?answer/i.test(l));
       if (answerLine) {
-        const letterMatch = answerLine.match(/\(?([A-D])\)?/);
+        const letterMatch = answerLine.match(/\(?([A-Da-d])\)?/);
         if (letterMatch) {
           correctIndex = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
         } else {
@@ -62,7 +83,7 @@ function parseMCQs(text: string): MCQ[] {
 
 export default function QuizSection({ content }: QuizSectionProps) {
   const [revealed, setRevealed] = useState<Record<number, number | null>>({});
-  const mcqs = parseMCQs(content);
+  const mcqs = typeof content === "string" ? parseMCQs(content) : content.questions;
 
   if (mcqs.length === 0) return null;
 
@@ -78,11 +99,16 @@ export default function QuizSection({ content }: QuizSectionProps) {
         <h2 className="text-lg font-semibold">Quiz</h2>
       </div>
 
-      <div className="space-y-6">
+      <motion.div
+        className="space-y-6"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {mcqs.map((mcq, qIdx) => {
           const qRevealed = revealed[qIdx] !== undefined && revealed[qIdx] !== null;
           return (
-          <div key={qIdx}>
+          <motion.div key={qIdx} variants={staggerItem}>
             <p className="font-medium text-sm mb-3">
               {qIdx + 1}. {mcq.question}
             </p>
@@ -127,10 +153,10 @@ export default function QuizSection({ content }: QuizSectionProps) {
                 Correct answer: {String.fromCharCode(65 + mcq.correctIndex)}) {mcq.options[mcq.correctIndex]}
               </p>
             )}
-          </div>
+          </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }

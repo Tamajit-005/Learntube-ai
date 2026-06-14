@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Layers, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 
 interface FlashCardsSectionProps {
@@ -9,24 +10,28 @@ interface FlashCardsSectionProps {
 
 function parseFlashcards(text: string): { question: string; answer: string }[] {
   const cards: { question: string; answer: string }[] = [];
-  const qaRegex = /Q\d*[\.:\)]\s*(.*?)(?=\nA\d*[\.:\)])/g;
-  const aRegex = /A\d*[\.:\)]\s*(.*?)(?=\nQ\d*[\.:\)]|$)/g;
+  const clean = text.replace(/\*\*/g, "").trim();
+  const lines = clean.split("\n").map((l) => l.trim()).filter(Boolean);
 
-  const questions = [...text.matchAll(qaRegex)].map((m) => m[1].trim());
-  const answers = [...text.matchAll(aRegex)].map((m) => m[1].trim());
+  let current: { question: string; answer: string } | null = null;
 
-  const count = Math.min(questions.length, answers.length);
-  for (let i = 0; i < count; i++) {
-    cards.push({ question: questions[i], answer: answers[i] });
-  }
+  for (const line of lines) {
+    const qMatch = line.match(/^Q\d*[:\.\)]\s*(.*)/);
+    const aMatch = line.match(/^A\d*[:\.\)]\s*(.*)/);
 
-  if (cards.length === 0) {
-    const lines = text.split("\n").filter((l) => l.trim());
-    for (let i = 0; i < lines.length - 1; i += 2) {
-      cards.push({ question: lines[i].replace(/^Q\d*[\.:\)]\s*/, ""), answer: lines[i + 1].replace(/^A\d*[\.:\)]\s*/, "") });
+    if (qMatch) {
+      if (current) cards.push(current);
+      current = { question: qMatch[1].trim(), answer: "" };
+    } else if (aMatch && current) {
+      current.answer = aMatch[1].trim();
+    } else if (current && current.answer) {
+      current.answer += " " + line;
+    } else if (current) {
+      current.question += " " + line;
     }
   }
 
+  if (current) cards.push(current);
   return cards;
 }
 
@@ -61,44 +66,61 @@ export default function FlashCardsSection({ content }: FlashCardsSectionProps) {
 
       <div
         onClick={() => setFlipped(!flipped)}
-        className="relative w-full h-48 cursor-pointer [perspective:1000px]"
+        className="relative w-full h-48 cursor-pointer perspective-[1000px]"
       >
-        <div className={`flashcard-inner w-full h-full ${flipped ? "flipped" : ""}`}>
-          <div className="flashcard-front bg-violet-50 dark:bg-slate-700/50">
+        <motion.div
+          className="relative w-full h-full"
+          animate={{ rotateY: flipped ? 180 : 0 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          <div
+            className="absolute inset-0 flex items-center justify-center p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-violet-50 dark:bg-slate-700/50"
+            style={{ backfaceVisibility: "hidden" }}
+          >
             <p className="text-center font-medium text-base">{cards[current].question}</p>
           </div>
-          <div className="flashcard-back bg-emerald-50 dark:bg-slate-700/50">
+          <div
+            className="absolute inset-0 flex items-center justify-center p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-slate-700/50"
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          >
             <p className="text-center text-sm">{cards[current].answer}</p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <p className="text-xs text-center text-gray-400 mt-2 mb-3">Click card to flip</p>
 
       <div className="flex justify-center gap-4">
-        <button
+        <motion.button
           onClick={prev}
           disabled={current === 0}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-40 transition-colors"
+          className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-40 transition-colors"
+          whileHover={{ scale: current === 0 ? 1 : 1.03 }}
+          whileTap={{ scale: current === 0 ? 1 : 0.97 }}
         >
           <ChevronLeft className="w-4 h-4" /> Prev
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={() => {
             setFlipped(false);
             setCurrent(0);
           }}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+          className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
           <RotateCcw className="w-4 h-4" /> Reset
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={next}
           disabled={current === cards.length - 1}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-40 transition-colors"
+          className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-40 transition-colors"
+          whileHover={{ scale: current === cards.length - 1 ? 1 : 1.03 }}
+          whileTap={{ scale: current === cards.length - 1 ? 1 : 0.97 }}
         >
           Next <ChevronRight className="w-4 h-4" />
-        </button>
+        </motion.button>
       </div>
     </div>
   );

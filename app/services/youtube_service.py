@@ -9,14 +9,11 @@ from app.services.flashcard_service import generate_flashcards
 from app.services.interview_service import generate_interview_questions
 from app.services.summary_service import generate_timestamps
 from app.services.formula_service import extract_formulas
-
 async def process_youtube_video(url):
 
     transcript = await get_transcript(url)
 
     chunks = create_chunks(transcript)
-
-    combined_text = " ".join(chunks[:1])
 
     # 2 concurrent calls max to stay under rate limits
     sem = asyncio.Semaphore(2)
@@ -25,12 +22,14 @@ async def process_youtube_video(url):
         async with sem:
             return await fn
 
+    combined_text = " ".join(chunks[:1])
+
     tasks = [
         with_limit(generate_notes(combined_text)),
         with_limit(generate_mcqs(combined_text)),
         with_limit(generate_flashcards(combined_text)),
         with_limit(generate_interview_questions(combined_text)),
-        with_limit(extract_formulas(combined_text))
+        with_limit(extract_formulas(combined_text)),
     ]
 
     (
@@ -38,7 +37,7 @@ async def process_youtube_video(url):
         quizzes,
         flashcards,
         interview_questions,
-        formulas
+        formulas,
     ) = await asyncio.gather(*tasks)
 
     timestamps = generate_timestamps(transcript)
@@ -49,5 +48,5 @@ async def process_youtube_video(url):
         "flashcards": flashcards,
         "interview_questions": interview_questions,
         "timestamps": timestamps,
-        "formulas": formulas
+        "formulas": formulas,
     }

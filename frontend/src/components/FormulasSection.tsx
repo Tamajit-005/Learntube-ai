@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { FunctionSquare, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { fadeIn } from "@/components/AnimatedPage";
 
 interface FormulasSectionProps {
   content: string;
@@ -21,7 +23,7 @@ export default function FormulasSection({ content }: FormulasSectionProps) {
   if (!content || content.trim() === "None" || content.trim() === "") return null;
 
   return (
-    <div className="card">
+    <motion.div className="card" variants={fadeIn} initial="hidden" animate="visible">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <FunctionSquare className="w-5 h-5 text-violet-500" />
@@ -35,9 +37,14 @@ export default function FormulasSection({ content }: FormulasSectionProps) {
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <div className="prose prose-sm dark:prose-invert max-w-none">
+      <motion.div
+        className="prose prose-sm dark:prose-invert max-w-none"
+        variants={fadeIn}
+        initial="hidden"
+        animate="visible"
+      >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

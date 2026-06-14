@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { fadeIn } from "@/components/AnimatedPage";
 
 interface PageHeaderProps {
   icon: LucideIcon;
@@ -11,7 +13,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ icon: Icon, title, description }: PageHeaderProps) {
   return (
-    <div className="mb-6">
+    <motion.div className="mb-6" variants={fadeIn} initial="hidden" animate="visible">
       <Link
         href="/"
         className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-violet-600 dark:text-gray-400 dark:hover:text-violet-400 transition-colors mb-4"
@@ -30,6 +32,6 @@ export default function PageHeader({ icon: Icon, title, description }: PageHeade
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

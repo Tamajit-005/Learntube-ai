@@ -1,23 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Briefcase, ChevronDown, ChevronRight, Lightbulb, Target, Star } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Briefcase, ChevronDown, Lightbulb, Target, Star } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
+import type { InterviewSection as InterviewSectionType } from "@/types";
 
 interface InterviewSectionProps {
-  content: string;
-}
-
-interface ParsedQuestion {
-  question: string;
-  description: string;
-}
-
-interface ParsedSection {
-  level: string;
-  intro: string;
-  questions: ParsedQuestion[];
+  content: string | { sections: InterviewSectionType[] };
 }
 
 const LEVEL_ICONS: Record<string, React.ReactNode> = {
@@ -42,6 +34,17 @@ function normalizeLevel(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
+interface ParsedQuestion {
+  question: string;
+  description: string;
+}
+
+interface ParsedSection {
+  level: string;
+  intro: string;
+  questions: ParsedQuestion[];
+}
+
 function parseInterviewContent(text: string): ParsedSection[] {
   const sections: ParsedSection[] = [];
   const lines = text.split("\n");
@@ -50,6 +53,7 @@ function parseInterviewContent(text: string): ParsedSection[] {
   let currentIntro = "";
   const currentQuestions: ParsedQuestion[] = [];
   let buffer: string[] = [];
+  let inAnswersSection = false;
 
   function flushSection() {
     if (!currentLevel) return;
@@ -81,6 +85,25 @@ function parseInterviewContent(text: string): ParsedSection[] {
       if (normalized !== currentLevel) {
         flushSection();
         currentLevel = normalized;
+        inAnswersSection = false;
+        continue;
+      }
+    }
+
+    // Skip answer section headings ("Example Answers", "Answers", "Sample Solutions", etc.)
+    if (/^\*{0,2}\s*(example\s+)?answers?|sample\s+(answers?|solutions?)/i.test(trimmed) && currentQuestions.length > 0) {
+      inAnswersSection = true;
+      continue;
+    }
+
+    // In answer section, map numbered items to previous questions by index
+    if (inAnswersSection) {
+      const numMatch = trimmed.match(/^(\d+)[\.\)]\s+(.*)/);
+      if (numMatch) {
+        const idx = parseInt(numMatch[1]) - 1;
+        if (idx >= 0 && idx < currentQuestions.length && !currentQuestions[idx].description) {
+          currentQuestions[idx].description = numMatch[2];
+        }
         continue;
       }
     }
@@ -120,13 +143,19 @@ export default function InterviewSection({ content }: InterviewSectionProps) {
   const [activeLevel, setActiveLevel] = useState<string>("Beginner");
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
 
-  const sections = useMemo(() => parseInterviewContent(content), [content]);
+  const isStructured = typeof content !== "string";
+  const sections = useMemo(
+    () => (isStructured ? content.sections : parseInterviewContent(content)),
+    [content, isStructured],
+  );
 
-  if (sections.length === 0 && content.trim()) {
+  const rawText = isStructured ? "" : content;
+
+  if (sections.length === 0 && rawText.trim()) {
     // Format raw content into proper markdown
-    const formatted = content
+    const formatted = rawText
       .split("\n")
-      .map((line) => {
+      .map((line: string) => {
         const t = line.trim();
         if (!t) return "";
         // Level headings (with or without ** markers)
@@ -215,7 +244,7 @@ export default function InterviewSection({ content }: InterviewSectionProps) {
       )}
 
       {/* Expand/Collapse All */}
-      {activeSection.questions.length > 1 && (
+      {activeSection.questions.length > 1 && activeSection.questions.some((q) => q.description) && (
         <button
           onClick={toggleAll}
           className="text-xs text-violet-500 hover:text-violet-700 dark:hover:text-violet-400 mb-3 transition-colors"
@@ -225,17 +254,42 @@ export default function InterviewSection({ content }: InterviewSectionProps) {
       )}
 
       {/* Questions */}
-      <div className="space-y-3">
+      <motion.div
+        className="space-y-3"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {activeSection.questions.length === 0 && (
           <p className="text-sm text-gray-400 text-center py-8">
             No interview questions available for this level.
           </p>
         )}
         {activeSection.questions.map((q, i) => {
+          // No answer — render as plain item without expand/collapse
+          if (!q.description) {
+            return (
+              <motion.div
+                key={i}
+                variants={staggerItem}
+                className="border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5"
+              >
+                <div className="flex items-start gap-3">
+                  <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border ${LEVEL_BADGE[activeLevel]}`}>
+                    {i + 1}
+                  </span>
+                  <p className="text-sm font-medium leading-snug flex-1 min-w-0">{q.question}</p>
+                </div>
+              </motion.div>
+            );
+          }
+
+          // Has answer — show expand/collapse
           const isExpanded = expandedQuestions.has(i);
           return (
-            <div
+            <motion.div
               key={i}
+              variants={staggerItem}
               className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden transition-all hover:border-gray-300 dark:hover:border-gray-600"
             >
               <button
@@ -247,24 +301,32 @@ export default function InterviewSection({ content }: InterviewSectionProps) {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium leading-snug">{q.question}</p>
-                  {isExpanded && q.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
-                      {q.description}
-                    </p>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.p
+                        className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed overflow-hidden"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                      >
+                        {q.description}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <span className="shrink-0 mt-0.5 text-gray-400">
-                  {isExpanded ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </span>
+                <motion.span
+                  className="shrink-0 mt-0.5 text-gray-400"
+                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </motion.span>
               </button>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }

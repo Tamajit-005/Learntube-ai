@@ -61,7 +61,7 @@ export default function VideoForm({ onSubmit, loading }: VideoFormProps) {
         <button
           type="submit"
           disabled={loading || !url.trim()}
-          className="px-6 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 shrink-0"
+          className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 shrink-0"
         >
           {loading ? (
             <>

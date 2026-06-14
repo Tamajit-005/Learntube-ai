@@ -3,27 +3,41 @@ export interface Timestamp {
   summary: string;
 }
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+
+export interface InterviewQuestion {
+  question: string;
+  description: string;
+}
+
+export interface InterviewSection {
+  level: string;
+  intro: string;
+  questions: InterviewQuestion[];
+}
+
 export interface AnalysisResult {
   notes: string;
-  quizzes: string;
+  quizzes: string | { questions: QuizQuestion[] };
   flashcards: string;
-  interview_questions: string;
+  interview_questions: string | { sections: InterviewSection[] };
   timestamps: Timestamp[];
   formulas: string;
 }
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: string;
+export interface AnalyzeResponse {
+  session_id: string | null;
+  result: AnalysisResult;
 }
 
-export interface FlashCard {
-  question: string;
-  answer: string;
+export interface SessionRecord {
+  id: string;
+  url: string;
+  analyzed_at: string;
+  result: AnalysisResult;
 }
 
-export interface InterviewQuestion {
-  level: string;
-  questions: { question: string; answer: string }[];
-}

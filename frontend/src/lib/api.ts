@@ -1,15 +1,30 @@
-import type { AnalysisResult } from "@/types";
+import type { AnalyzeResponse, SessionRecord } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface ApiError {
-  type: "no_transcript" | "rate_limit" | "server_error" | "network";
+  type: "no_transcript" | "rate_limit" | "server_error" | "network" | "not_found" | "invalid_url";
   message: string;
 }
 
 function parseErrorMessage(body: string): ApiError {
+  // Try structured JSON error first (e.g. from HTTPException with detail)
   const isJson = body.trim().startsWith("{") || body.trim().startsWith("[");
+  if (isJson) {
+    try {
+      const data = JSON.parse(body);
+      if (data?.detail?.type) {
+        return {
+          type: data.detail.type as ApiError["type"],
+          message: data.detail.message || body,
+        };
+      }
+    } catch {
+      // not valid JSON, fall through to plain-text checks
+    }
+  }
 
+  // Plain-text heuristic matching for non-structured errors
   if (!isJson) {
     if (body.includes("TranscriptsDisabled") || body.includes("subtitles are disabled")) {
       return {
@@ -43,13 +58,33 @@ function parseErrorMessage(body: string): ApiError {
   };
 }
 
-export async function analyzeVideo(url: string): Promise<AnalysisResult> {
+export async function analyzeVideo(url: string): Promise<AnalyzeResponse> {
   let response: Response;
 
   try {
     response = await fetch(`${API_BASE}/analyze?url=${encodeURIComponent(url)}`, {
       method: "POST",
     });
+  } catch {
+    throw {
+      type: "network",
+      message: "Could not connect to the server. Make sure the backend is running on port 8000.",
+    } as ApiError;
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw parseErrorMessage(text);
+  }
+
+  return response.json();
+}
+
+export async function getSession(id: string): Promise<SessionRecord> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
   } catch {
     throw {
       type: "network",

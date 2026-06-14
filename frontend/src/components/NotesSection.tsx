@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FileText, Copy, Check, ListTree, BookOpen } from "lucide-react";
+import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
 
 interface NotesSectionProps {
   content: string;
@@ -126,9 +128,14 @@ export default function NotesSection({ content }: NotesSectionProps) {
       )}
 
       {/* Sections */}
-      <div className="space-y-5">
+      <motion.div
+        className="space-y-5"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {sections.map((s) => (
-          <div key={s.id}>
+          <motion.div key={s.id} variants={staggerItem}>
             {s.heading && (
               <h2
                 id={s.id}
@@ -152,9 +159,9 @@ export default function NotesSection({ content }: NotesSectionProps) {
             ">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{s.body}</ReactMarkdown>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

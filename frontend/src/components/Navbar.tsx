@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   GraduationCap,
   Home,
@@ -27,6 +28,20 @@ const NAV_ITEMS = [
   { href: "/formulas", label: "Formulas", icon: FunctionSquare },
 ];
 
+const mobileMenuVariants = {
+  hidden: { opacity: 0, height: 0 },
+  visible: {
+    opacity: 1,
+    height: "auto",
+    transition: { duration: 0.25, ease: "easeOut" as const },
+  },
+  exit: {
+    opacity: 0,
+    height: 0,
+    transition: { duration: 0.2, ease: "easeIn" as const },
+  },
+};
+
 export default function Navbar() {
   const pathname = usePathname();
   const { result, loading } = useAnalysis();
@@ -41,10 +56,10 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <GraduationCap className="w-6 h-6 text-violet-500" />
-            <span className="text-sm font-bold hidden sm:block">LearnTube AI</span>
+            <span className="font-bold text-sm sm:text-base">LearnTube AI</span>
           </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav / Dropdown */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
@@ -74,61 +89,73 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Loading indicator */}
-          {loading && (
-            <div className="hidden md:flex items-center gap-2 text-xs text-violet-500">
-              <div className="w-3 h-3 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
-              Analyzing...
-            </div>
-          )}
+          {/* Right section */}
+          <div className="flex items-center gap-2">
+            {/* Loading indicator */}
+            {loading && (
+              <div className="hidden md:flex items-center gap-2 text-xs text-violet-500 mr-1">
+                <div className="w-3 h-3 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+                Analyzing...
+              </div>
+            )}
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900">
-          <div className="px-4 py-3 space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              const disabled = !hasResult && item.href !== "/";
+      {/* Mobile Menu (animated dropdown) */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            variants={mobileMenuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="md:hidden overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900"
+          >
+            <div className="px-4 py-3 space-y-1">
+              {NAV_ITEMS.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                const disabled = !hasResult && item.href !== "/";
 
-              return (
-                <Link
-                  key={item.href}
-                  href={disabled ? "#" : item.href}
-                  onClick={(e) => {
-                    if (disabled) {
-                      e.preventDefault();
-                    } else {
-                      setMobileOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-                    ${
-                      isActive
-                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
-                        : disabled
-                          ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-                    }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                return (
+                  <Link
+                    key={item.href}
+                    href={disabled ? "#" : item.href}
+                    onClick={(e) => {
+                      if (disabled) {
+                        e.preventDefault();
+                      } else {
+                        setMobileOpen(false);
+                      }
+                    }}
+                    className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-all
+                      ${
+                        isActive
+                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                          : disabled
+                            ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                      }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
