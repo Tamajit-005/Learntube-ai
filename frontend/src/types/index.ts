@@ -1,8 +1,3 @@
-export interface Timestamp {
-  timestamp: number;
-  summary: string;
-}
-
 export interface QuizQuestion {
   question: string;
   options: string[];
@@ -25,7 +20,6 @@ export interface AnalysisResult {
   quizzes: string | { questions: QuizQuestion[] };
   flashcards: string;
   interview_questions: string | { sections: InterviewSection[] };
-  timestamps: Timestamp[];
   formulas: string;
 }
 

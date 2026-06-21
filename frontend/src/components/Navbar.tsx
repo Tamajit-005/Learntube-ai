@@ -11,7 +11,6 @@ import {
   HelpCircle,
   Layers,
   Briefcase,
-  Clock,
   FunctionSquare,
   History,
   Menu,
@@ -25,7 +24,6 @@ const NAV_ITEMS = [
   { href: "/quiz", label: "Quiz", icon: HelpCircle },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/interview", label: "Interview", icon: Briefcase },
-  { href: "/timestamps", label: "Timestamps", icon: Clock },
   { href: "/formulas", label: "Formulas", icon: FunctionSquare },
 ];
 
@@ -69,7 +67,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav / Dropdown */}
-          <div className="hidden md:flex items-center gap-0.5">
+          <div className="hidden lg:flex items-center gap-0.5">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -140,7 +138,7 @@ export default function Navbar() {
 
             {/* Loading indicator */}
             {loading && (
-              <div className="hidden md:flex items-center gap-2 text-xs text-violet-500 mr-1">
+              <div className="hidden lg:flex items-center gap-2 text-xs text-violet-500 mr-1">
                 <div className="w-3 h-3 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
                 Analyzing...
               </div>
@@ -149,7 +147,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Toggle navigation menu"
             >
               {mobileOpen ? (
@@ -170,7 +168,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="md:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-lg"
+            className="lg:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-lg"
           >
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
