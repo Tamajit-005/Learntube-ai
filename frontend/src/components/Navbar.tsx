@@ -13,6 +13,7 @@ import {
   Briefcase,
   FunctionSquare,
   History,
+  Trash2,
   Menu,
   X,
 } from "lucide-react";
@@ -43,7 +44,7 @@ const mobileMenuVariants = {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { result, loading, hasPrevious, viewingPrevious, toggleHistory } =
+  const { result, loading, hasPrevious, viewingPrevious, toggleHistory, clearSession } =
     useAnalysis();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -98,8 +99,9 @@ export default function Navbar() {
 
           {/* Right section */}
           <div className="flex items-center gap-2">
-            {/* History toggle — only show when there's a result */}
+            {/* History toggle + clear — desktop only (mobile has them in the dropdown) */}
             {hasResult && (
+              <div className="hidden lg:flex items-center gap-2">
               <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <button
                   onClick={() => {
@@ -133,6 +135,17 @@ export default function Navbar() {
                   <History className="w-3.5 h-3.5" />
                   Previous
                 </button>
+              </div>
+
+              {/* Clear session */}
+              <button
+                onClick={clearSession}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                title="Clear all stored data"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Clear
+              </button>
               </div>
             )}
 
@@ -201,6 +214,49 @@ export default function Navbar() {
                   </Link>
                 );
               })}
+              {hasResult && (
+                <>
+                  <hr className="border-gray-200 dark:border-gray-700 my-2" />
+
+                  {/* Mobile history toggle */}
+                  <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden w-fit mx-3">
+                    <button
+                      onClick={() => { if (viewingPrevious) { toggleHistory(); setMobileOpen(false); } }}
+                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
+                        !viewingPrevious
+                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      Latest
+                    </button>
+                    <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                    <button
+                      onClick={() => { if (!viewingPrevious && hasPrevious) { toggleHistory(); setMobileOpen(false); } }}
+                      disabled={!hasPrevious}
+                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
+                        viewingPrevious
+                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                          : !hasPrevious
+                            ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                            : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      Previous
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => { clearSession(); setMobileOpen(false); }}
+                    className="flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all w-full"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Clear all data
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}

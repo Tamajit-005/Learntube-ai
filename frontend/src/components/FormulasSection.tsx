@@ -34,7 +34,7 @@ export default function FormulasSection({ content }: FormulasSectionProps) {
         </button>
       </div>
       <motion.div
-        className="prose prose-sm dark:prose-invert max-w-none"
+        className="prose prose-sm dark:prose-invert max-w-none overflow-x-hidden prose-pre:overflow-x-auto prose-pre:whitespace-pre-wrap prose-pre:break-words"
         variants={fadeIn}
         initial="hidden"
         animate="visible"

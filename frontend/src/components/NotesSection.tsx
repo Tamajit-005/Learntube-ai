@@ -148,10 +148,10 @@ export default function NotesSection({ content }: NotesSectionProps) {
                 </a>
               </h2>
             )}
-            <div className="prose prose-sm dark:prose-invert max-w-none
+            <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-hidden
               prose-strong:text-violet-700 dark:prose-strong:text-violet-400
               prose-code:text-xs prose-code:bg-gray-100 dark:prose-code:bg-slate-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-              prose-pre:bg-gray-100 dark:prose-pre:bg-slate-800 prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-gray-700
+              prose-pre:bg-gray-100 dark:prose-pre:bg-slate-800 prose-pre:border prose-pre:border-gray-200 dark:prose-pre:border-gray-700 prose-pre:overflow-x-auto prose-pre:whitespace-pre-wrap prose-pre:break-words
               prose-li:marker:text-gray-400
               prose-hr:border-gray-200 dark:prose-hr:border-gray-700
             ">
