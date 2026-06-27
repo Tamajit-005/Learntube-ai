@@ -1,27 +1,5 @@
-import json
-import re
 from app.services.ai_service import generate_ai_response
-
-
-def _parse_json(text: str) -> dict | None:
-    """Extract and parse JSON from AI response, handling markdown fences."""
-    # Try extracting from ```json ... ``` block
-    m = re.search(r"```(?:json)?\s*\n?(.*?)```", text, re.DOTALL)
-    if m:
-        text = m.group(1).strip()
-    # Try parsing directly
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
-    # Try finding {...} top-level object
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    if m:
-        try:
-            return json.loads(m.group())
-        except json.JSONDecodeError:
-            pass
-    return None
+from app.services.json_utils import _parse_json
 
 
 async def generate_mcqs(chunk):
@@ -44,7 +22,7 @@ async def generate_mcqs(chunk):
     {chunk}
     """
 
-    raw = await generate_ai_response(prompt)
+    raw = await generate_ai_response(prompt, response_format={"type": "json_object"})
     parsed = _parse_json(raw)
 
     if parsed and isinstance(parsed, dict) and "questions" in parsed:

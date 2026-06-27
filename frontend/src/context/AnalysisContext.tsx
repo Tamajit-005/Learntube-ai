@@ -1,18 +1,45 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import type { AnalysisResult } from "@/types";
+import type { AnalysisResult, SessionRecord } from "@/types";
 import type { ApiError } from "@/lib/api";
-import { analyzeVideo, getSession } from "@/lib/api";
+import { analyzeVideo } from "@/lib/api";
+
+const LS_CURRENT = "learntube_current";
+const LS_PREVIOUS = "learntube_previous";
+
+function saveToLS(key: string, record: SessionRecord | null) {
+  if (record === null) {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, JSON.stringify(record));
+  }
+}
+
+function loadFromLS(key: string): SessionRecord | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.url && parsed.result) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 interface AnalysisContextValue {
   result: AnalysisResult | null;
+  currentResult: AnalysisResult | null;
+  previousResult: AnalysisResult | null;
+  viewingPrevious: boolean;
+  hasPrevious: boolean;
   loading: boolean;
   error: ApiError | null;
-  sessionId: string | null;
   handleSubmit: (url: string) => Promise<void>;
-  restoreSession: (id: string) => Promise<void>;
+  toggleHistory: () => void;
   clearSession: () => void;
   clearError: () => void;
 }
@@ -26,22 +53,57 @@ export function useAnalysis() {
 }
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const router = useRouter();
+  const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = loadFromLS(LS_CURRENT);
+    return saved ? saved.result : null;
+  });
+  const [previousResult, setPreviousResult] = useState<AnalysisResult | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = loadFromLS(LS_PREVIOUS);
+    return saved ? saved.result : null;
+  });
+  const [viewingPrevious, setViewingPrevious] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setHydrated(true); }, []);
+
+  // Exposed result is whichever we're viewing (null until hydrated to avoid SSR mismatch)
+  const result = hydrated ? (viewingPrevious ? previousResult : currentResult) : null;
+  const hasPrevious = hydrated ? previousResult !== null : false;
 
   const handleSubmit = useCallback(async (url: string) => {
     setLoading(true);
-    setResult(null);
     setError(null);
-    setSessionId(null);
+    setViewingPrevious(false);
+
+    const prevCurrent = currentResult;
+    setCurrentResult(null);
 
     try {
       const response = await analyzeVideo(url);
-      setResult(response.result);
-      setSessionId(response.session_id);
+      setCurrentResult(response.result);
+
+      // Persist to localStorage
+      saveToLS(LS_CURRENT, {
+        url,
+        analyzed_at: new Date().toISOString(),
+        result: response.result,
+      });
+      if (prevCurrent) {
+        setPreviousResult(prevCurrent);
+        saveToLS(LS_PREVIOUS, {
+          url: "(previous)",
+          analyzed_at: "",
+          result: prevCurrent,
+        });
+      }
+
       toast.success("Analysis complete!");
+      router.push("/notes");
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr);
@@ -49,32 +111,23 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentResult, router]);
 
-  const restoreSession = useCallback(async (id: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const record = await getSession(id);
-      setResult(record.result);
-      setSessionId(record.id);
-      toast.success("Session restored!");
-    } catch (err) {
-      const apiErr = err as ApiError;
-      setError(apiErr);
-      if (apiErr.type !== "not_found") {
-        toast.error(apiErr.message);
-      }
-    } finally {
-      setLoading(false);
+  const toggleHistory = useCallback(() => {
+    if (viewingPrevious) {
+      setViewingPrevious(false);
+    } else {
+      setViewingPrevious(true);
     }
-  }, []);
+  }, [viewingPrevious]);
 
   const clearSession = useCallback(() => {
-    setResult(null);
+    setCurrentResult(null);
+    setPreviousResult(null);
     setError(null);
-    setSessionId(null);
+    setViewingPrevious(false);
+    saveToLS(LS_CURRENT, null);
+    saveToLS(LS_PREVIOUS, null);
   }, []);
 
   const clearError = useCallback(() => setError(null), []);
@@ -82,9 +135,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   return (
     <AnalysisContext.Provider
       value={{
-        result, loading, error,
-        sessionId,
-        handleSubmit, restoreSession, clearSession, clearError,
+        result, currentResult, previousResult,
+        viewingPrevious, hasPrevious,
+        loading, error,
+        handleSubmit, toggleHistory, clearSession, clearError,
       }}
     >
       {children}
