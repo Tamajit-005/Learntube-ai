@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<{ error?: string }>;
   register: (email: string, password: string, username: string) => Promise<{ error?: string }>;
+  changePassword: () => Promise<{ error?: string }>;
   logout: () => void;
   refresh: () => Promise<void>;
 }
@@ -54,6 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) return { error: data.error || "Login failed" };
+    // Clear guest session data from localStorage on login
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("learntube_current");
+      localStorage.removeItem("learntube_previous");
+    }
     setUser(data.user);
     return {};
   }, []);
@@ -69,12 +75,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {};
   }, []);
 
+  const changePassword = useCallback(async () => {
+    const res = await fetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: data.error || "Failed to send reset email" };
+    return {};
+  }, []);
+
   const logout = useCallback(() => {
     window.location.href = "/api/auth/logout";
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refresh }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, changePassword, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
