@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ManagementClient } from "auth0";
+import { connectDB } from "@/lib/mongodb";
+import User from "@/lib/user";
 
 const management = new ManagementClient({
   domain: process.env.AUTH0_DOMAIN!,
@@ -17,12 +19,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
     if (username.length < 3 || username.length > 30) {
       return NextResponse.json(
         { error: "Username must be 3-30 characters" },
         { status: 400 }
       );
     }
+
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       return NextResponse.json(
         { error: "Username: letters, numbers, underscore only" },
@@ -40,7 +44,18 @@ export async function POST(req: NextRequest) {
     });
 
     const userId = (auth0User.data?.user_id || auth0User.user_id) as string;
+
     console.log("Auth0 user created:", userId);
+
+    // Save user in MongoDB
+    await connectDB();
+
+    await User.create({
+      auth0Id: userId,
+      email,
+      username: username.toLowerCase(),
+      registeredAt: new Date(),
+    });
 
     return NextResponse.json({
       success: true,
@@ -48,15 +63,26 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     console.error("Signup error:", err);
-    const apiError = err as { statusCode?: number; message?: string };
+
+    const apiError = err as {
+      statusCode?: number;
+      message?: string;
+    };
+
     let errorMessage = "Failed to create account";
-    if (apiError.statusCode === 409 || apiError.message?.includes("user already exists")) {
+
+    if (
+      apiError.statusCode === 409 ||
+      apiError.message?.includes("user already exists")
+    ) {
       errorMessage = "This email or username is already taken";
     } else if (apiError.message?.includes("password")) {
-      errorMessage = "Password too weak. Use 8+ characters with letters & numbers";
+      errorMessage =
+        "Password too weak. Use 8+ characters with letters & numbers";
     } else if (apiError.message?.includes("email")) {
       errorMessage = "Invalid email address";
     }
+
     return NextResponse.json(
       { error: errorMessage },
       { status: apiError.statusCode || 500 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { cookies } from "next/headers";
+import { connectDB } from "@/lib/mongodb";
+import User from "@/lib/user";
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,23 +42,34 @@ export async function POST(req: NextRequest) {
 
     if (!tokenResponse.ok) {
       let errorMessage = "Invalid email/username or password";
-      if (tokenData.error === "invalid_grant" || tokenData.error === "invalid_user_password") {
+
+      if (
+        tokenData.error === "invalid_grant" ||
+        tokenData.error === "invalid_user_password"
+      ) {
         errorMessage = "Invalid email/username or password";
       } else if (tokenData.error === "access_denied") {
         errorMessage = "Account locked or disabled";
       } else if (tokenData.error_description) {
         errorMessage = tokenData.error_description;
       }
-      return NextResponse.json({ error: errorMessage }, { status: 401 });
+
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 401 }
+      );
     }
 
     // Get user profile
     const userInfoResponse = await fetch(
       `https://${domain}/userinfo`,
       {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
       }
     );
+
     const userInfo = await userInfoResponse.json();
 
     // Determine display username
@@ -67,7 +80,11 @@ export async function POST(req: NextRequest) {
 
     // Create session
     const cookieStore = await cookies();
-    const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+    const session = await getIronSession<SessionData>(
+      cookieStore,
+      sessionOptions
+    );
+
     session.user = {
       sub: userInfo.sub,
       email: userInfo.email,
@@ -76,9 +93,31 @@ export async function POST(req: NextRequest) {
       picture: userInfo.picture,
       username: authUsername,
     };
+
+    //log in user and check if they exist in MongoDB
+
+    await connectDB();
+
+    const dbUser = await User.findOne({
+      auth0Id: userInfo.sub,
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        {
+          error: "User not found. Please register first.",
+        },
+        { status: 404 }
+      );
+    }
+
+    dbUser.lastLoginAt = new Date();
+    await dbUser.save();
+
     session.accessToken = tokenData.access_token;
     session.idToken = tokenData.id_token;
     session.isLoggedIn = true;
+
     await session.save();
 
     return NextResponse.json({
@@ -87,6 +126,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Login error:", error);
+
     return NextResponse.json(
       { error: "Login failed. Please try again." },
       { status: 500 }

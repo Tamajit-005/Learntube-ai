@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LogOut,
@@ -30,6 +30,13 @@ const NAV_ITEMS = [
   { href: "/formulas", label: "Formulas", icon: FunctionSquare },
 ];
 
+interface HistoryItem {
+  _id: string;
+  url: string;
+  title?: string;
+  analyzed_at: string;
+}
+
 const mobileMenuVariants = {
   hidden: { opacity: 0, height: 0 },
   visible: {
@@ -46,6 +53,7 @@ const mobileMenuVariants = {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     result,
     loading,
@@ -53,11 +61,16 @@ export default function Navbar() {
     viewingPrevious,
     toggleHistory,
     clearSession,
+    loadSavedAnalysis,
   } = useAnalysis();
   const { user, isLoading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const historyMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -67,10 +80,65 @@ export default function Navbar() {
       ) {
         setUserMenuOpen(false);
       }
+
+      if (
+        historyMenuRef.current &&
+        !historyMenuRef.current.contains(e.target as Node)
+      ) {
+        setHistoryOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const fetchHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        const response = await fetch("/api/content-history", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          setHistoryItems([]);
+          return;
+        }
+
+        const data = await response.json();
+        setHistoryItems(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch content history:", error);
+        setHistoryItems([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [user]);
+
+  const handleHistorySelect = async (id: string) => {
+    setHistoryOpen(false);
+    setMobileOpen(false);
+
+    try {
+      const response = await fetch(`/api/content-history/${id}`);
+      if (!response.ok) return;
+
+      const item = await response.json();
+      if (item?.result) {
+        loadSavedAnalysis(item.url, item.analyzed_at, item.result);
+        router.push("/notes");
+      }
+    } catch (error) {
+      console.error("Failed to load content history item:", error);
+    }
+  };
 
   const userName =
     user?.username || user?.nickname || user?.name || user?.email || "";
@@ -189,28 +257,74 @@ export default function Navbar() {
             {/* History toggle + clear — desktop only (mobile has them in the dropdown) */}
             {hasResult && (
               <div className="hidden lg:flex items-center gap-2">
-                <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <button
-                    onClick={() => {
-                      if (viewingPrevious) toggleHistory();
-                    }}
-                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
+                {user ? (
+                  <div className="relative" ref={historyMenuRef}>
+                    <button
+                      onClick={() => setHistoryOpen(!historyOpen)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      History
+                      <span className="text-[10px]">▼</span>
+                    </button>
+
+                    <AnimatePresence>
+                      {historyOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 top-full mt-1.5 w-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden z-50"
+                        >
+                          <div className="max-h-60 overflow-y-auto">
+                            {historyLoading ? (
+                              <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                Loading history...
+                              </div>
+                            ) : historyItems.length > 0 ? (
+                              historyItems.map((item) => (
+                                <button
+                                  key={item._id}
+                                  onClick={() => handleHistorySelect(item._id)}
+                                  className="block w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                  <span className="block truncate">{item.title || item.url}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                No saved history yet
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <button
+                      onClick={() => {
+                        if (viewingPrevious) toggleHistory();
+                      }}
+                      className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
                     ${
                       !viewingPrevious
                         ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shadow-sm"
                         : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                     }`}
-                  >
-                    <History className="w-3.5 h-3.5" />
-                    Latest
-                  </button>
-                  <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
-                  <button
-                    onClick={() => {
-                      if (!viewingPrevious && hasPrevious) toggleHistory();
-                    }}
-                    disabled={!hasPrevious}
-                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      Latest
+                    </button>
+                    <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                    <button
+                      onClick={() => {
+                        if (!viewingPrevious && hasPrevious) toggleHistory();
+                      }}
+                      disabled={!hasPrevious}
+                      className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
                     ${
                       viewingPrevious
                         ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shadow-sm"
@@ -218,11 +332,12 @@ export default function Navbar() {
                           ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
                           : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                     }`}
-                  >
-                    <History className="w-3.5 h-3.5" />
-                    Previous
-                  </button>
-                </div>
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      Previous
+                    </button>
+                  </div>
+                )}
 
                 {/* Clear session */}
                 <button
@@ -338,45 +453,91 @@ export default function Navbar() {
                 <>
                   <hr className="border-gray-200 dark:border-gray-700 my-2" />
 
-                  {/* Mobile history toggle */}
-                  <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden w-fit mx-3">
-                    <button
-                      onClick={() => {
-                        if (viewingPrevious) {
-                          toggleHistory();
-                          setMobileOpen(false);
-                        }
-                      }}
-                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
-                        !viewingPrevious
-                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      Latest
-                    </button>
-                    <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
-                    <button
-                      onClick={() => {
-                        if (!viewingPrevious && hasPrevious) {
-                          toggleHistory();
-                          setMobileOpen(false);
-                        }
-                      }}
-                      disabled={!hasPrevious}
-                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
-                        viewingPrevious
-                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
-                          : !hasPrevious
-                            ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  {user ? (
+                    <div className="relative mx-3">
+                      <button
+                        onClick={() => setHistoryOpen(!historyOpen)}
+                        className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        History
+                        <span className="text-[10px]">▼</span>
+                      </button>
+
+                      <AnimatePresence>
+                        {historyOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden"
+                          >
+                            <div className="max-h-60 overflow-y-auto">
+                              {historyLoading ? (
+                                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                  Loading history...
+                                </div>
+                              ) : historyItems.length > 0 ? (
+                                historyItems.map((item) => (
+                                  <button
+                                    key={item._id}
+                                    onClick={() => handleHistorySelect(item._id)}
+                                    className="block w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                  >
+                                    <span className="block truncate">{item.title || item.title || item.url}</span>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                  No saved history yet
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden w-fit mx-3">
+                      <button
+                        onClick={() => {
+                          if (viewingPrevious) {
+                            toggleHistory();
+                            setMobileOpen(false);
+                          }
+                        }}
+                        className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
+                          !viewingPrevious
+                            ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
                             : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      Previous
-                    </button>
-                  </div>
+                        }`}
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        Latest
+                      </button>
+                      <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                      <button
+                        onClick={() => {
+                          if (!viewingPrevious && hasPrevious) {
+                            toggleHistory();
+                            setMobileOpen(false);
+                          }
+                        }}
+                        disabled={!hasPrevious}
+                        className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
+                          viewingPrevious
+                            ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                            : !hasPrevious
+                              ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                              : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        Previous
+                      </button>
+                    </div>
+                  )}
 
                   <button
                     onClick={() => {

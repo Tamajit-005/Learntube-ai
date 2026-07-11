@@ -39,6 +39,7 @@ interface AnalysisContextValue {
   loading: boolean;
   error: ApiError | null;
   handleSubmit: (url: string) => Promise<void>;
+  loadSavedAnalysis: (url: string, analyzedAt: string, result: AnalysisResult) => void;
   toggleHistory: () => void;
   clearSession: () => void;
   clearError: () => void;
@@ -75,6 +76,30 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   const result = hydrated ? (viewingPrevious ? previousResult : currentResult) : null;
   const hasPrevious = hydrated ? previousResult !== null : false;
 
+  const saveContent = async (url: string, result: AnalysisResult) => {
+      try {
+        // Check if user is logged in
+        const session = await fetch("/api/auth/me");
+        const { user } = await session.json();
+
+        if (!user) return;
+
+        await fetch("/api/content-save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url,
+            analyzed_at: new Date().toISOString(),
+            result,
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to save content:", err);
+      }
+    };
+
   const handleSubmit = useCallback(async (url: string) => {
     setLoading(true);
     setError(null);
@@ -84,8 +109,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     setCurrentResult(null);
 
     try {
-      const response = await analyzeVideo(url);
-      setCurrentResult(response.result);
+    const response = await analyzeVideo(url);
+
+    setCurrentResult(response.result);
+
+    // Save to MongoDB if the user is logged in
+    await saveContent(url, response.result);
 
       // Persist to localStorage
       saveToLS(LS_CURRENT, {
@@ -113,6 +142,17 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     }
   }, [currentResult, router]);
 
+  const loadSavedAnalysis = useCallback((url: string, analyzedAt: string, savedResult: AnalysisResult) => {
+    setCurrentResult(savedResult);
+    setViewingPrevious(false);
+    setError(null);
+    saveToLS(LS_CURRENT, {
+      url,
+      analyzed_at: analyzedAt,
+      result: savedResult,
+    });
+  }, []);
+
   const toggleHistory = useCallback(() => {
     if (viewingPrevious) {
       setViewingPrevious(false);
@@ -138,7 +178,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         result, currentResult, previousResult,
         viewingPrevious, hasPrevious,
         loading, error,
-        handleSubmit, toggleHistory, clearSession, clearError,
+        handleSubmit, loadSavedAnalysis, toggleHistory, clearSession, clearError,
       }}
     >
       {children}
