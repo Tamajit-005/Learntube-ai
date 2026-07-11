@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import toast from "react-hot-toast";
 import {
   LogOut,
   GraduationCap,
@@ -17,6 +18,7 @@ import {
   Trash2,
   Menu,
   X,
+  KeyRound,
 } from "lucide-react";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { useAuth } from "@/context/AuthContext";
@@ -63,7 +65,7 @@ export default function Navbar() {
     clearSession,
     loadSavedAnalysis,
   } = useAnalysis();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, changePassword } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -148,12 +150,12 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg">
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo — left side */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 shrink-0 group -ml-2 lg:-ml-3"
+            className="flex items-center gap-2.5 shrink-0 group"
           >
             <div className="w-8 h-8 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center transition-transform group-hover:scale-105">
               <GraduationCap className="w-5 h-5 text-violet-500" />
@@ -164,7 +166,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav / Dropdown */}
-          <div className="hidden lg:flex items-center gap-0.5">
+          <div className="hidden xl:flex items-center gap-1.5">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -194,10 +196,10 @@ export default function Navbar() {
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 relative" ref={userMenuRef}>
+          <div className="flex items-center gap-1.5 relative" ref={userMenuRef}>
             {/* User / Auth — desktop */}
             {!isLoading && (
-              <div className="hidden lg:flex items-center">
+              <div className="hidden xl:flex items-center">
                 {user ? (
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -211,13 +213,13 @@ export default function Navbar() {
                   <div className="flex items-center gap-1 mr-1">
                     <a
                       href="/login"
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
+                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
                     >
                       Sign in
                     </a>
                     <a
                       href="/login?tab=register"
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
+                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
                     >
                       Register
                     </a>
@@ -242,6 +244,21 @@ export default function Navbar() {
                       {userName}
                     </p>
                   </div>
+                  <button
+                    onClick={async () => {
+                      setUserMenuOpen(false);
+                      const result = await changePassword();
+                      if (result.error) {
+                        toast.error(result.error);
+                      } else {
+                        toast.success("Password reset email sent!");
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-500 transition-colors w-full text-left"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    Change Password
+                  </button>
                   <a
                     href="/api/auth/logout"
                     onClick={() => setUserMenuOpen(false)}
@@ -353,7 +370,7 @@ export default function Navbar() {
 
             {/* Loading indicator */}
             {loading && (
-              <div className="hidden lg:flex items-center gap-2 text-xs text-violet-500 mr-1">
+              <div className="hidden xl:flex items-center gap-2 text-xs text-violet-500 mr-1">
                 <div className="w-3 h-3 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
                 Analyzing...
               </div>
@@ -363,7 +380,7 @@ export default function Navbar() {
             {!isLoading && (
               <>
                 {user ? (
-                  <div className="relative lg:hidden">
+                  <div className="relative xl:hidden">
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
                       className="w-8 h-8 rounded-full bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center hover:bg-violet-500/20 dark:hover:bg-violet-500/30 transition-all"
@@ -374,7 +391,7 @@ export default function Navbar() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 lg:hidden">
+                  <div className="flex items-center gap-1 xl:hidden">
                     <a
                       href="/login"
                       className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
@@ -395,7 +412,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              className="xl:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
               aria-label="Toggle navigation menu"
             >
               {mobileOpen ? (
@@ -416,7 +433,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="lg:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-lg"
+            className="xl:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-lg"
           >
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
@@ -449,7 +466,7 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-              {hasResult && (
+              {hasResult && !user && (
                 <>
                   <hr className="border-gray-200 dark:border-gray-700 my-2" />
 
