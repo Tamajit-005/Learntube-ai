@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import toast from "react-hot-toast";
 import {
   LogOut,
   Home,
@@ -67,7 +68,7 @@ export default function Navbar() {
     clearSession,
     loadSavedAnalysis,
   } = useAnalysis();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, changePassword } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -210,7 +211,7 @@ export default function Navbar() {
           <div className="ml-auto flex items-center gap-2 relative" ref={userMenuRef}>
             {/* User / Auth — desktop */}
             {!isLoading && (
-              <div className="hidden lg:flex items-center">
+              <div className="hidden xl:flex items-center">
                 {user ? (
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -259,10 +260,21 @@ export default function Navbar() {
                       {userName}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400">
-                    <KeyRound className="w-3.5 h-3.5 opacity-0" />
-                    Profile
-                  </div>
+                  <button
+                    onClick={async () => {
+                      setUserMenuOpen(false);
+                      const result = await changePassword();
+                      if (result.error) {
+                        toast.error(result.error);
+                      } else {
+                        toast.success("Password reset email sent!");
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-500 transition-colors w-full text-left"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    Change Password
+                  </button>
                   <a
                     href="/api/auth/logout"
                     onClick={() => setUserMenuOpen(false)}
@@ -374,7 +386,7 @@ export default function Navbar() {
 
             {/* Loading indicator */}
             {loading && (
-              <div className="hidden lg:flex items-center gap-2 text-xs text-violet-500 mr-1">
+              <div className="hidden xl:flex items-center gap-2 text-xs text-violet-500 mr-1">
                 <div className="w-3 h-3 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
                 Analyzing...
               </div>
@@ -384,7 +396,7 @@ export default function Navbar() {
             {!isLoading && (
               <>
                 {user ? (
-                  <div className="relative lg:hidden">
+                  <div className="relative xl:hidden">
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
                       className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
@@ -471,7 +483,7 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-              {hasResult && (
+              {hasResult && !user && (
                 <>
                   <hr className="border-gray-200 dark:border-gray-700 my-2" />
 
