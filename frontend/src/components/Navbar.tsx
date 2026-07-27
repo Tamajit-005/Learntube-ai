@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LogOut,
-  GraduationCap,
   Home,
   FileText,
   HelpCircle,
@@ -17,9 +16,13 @@ import {
   Trash2,
   Menu,
   X,
+  BadgeInfo,
+  ChevronDown,
+  KeyRound,
 } from "lucide-react";
 import { useAnalysis } from "@/context/AnalysisContext";
 import { useAuth } from "@/context/AuthContext";
+import Logo from "./Logo";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
@@ -28,6 +31,7 @@ const NAV_ITEMS = [
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/interview", label: "Interview", icon: Briefcase },
   { href: "/formulas", label: "Formulas", icon: FunctionSquare },
+  { href: "/about", label: "About", icon: BadgeInfo },
 ];
 
 interface HistoryItem {
@@ -148,27 +152,25 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="flex items-center justify-between h-14">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <div className="flex h-16 items-center gap-4">
           {/* Logo — left side */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 shrink-0 group -ml-2 lg:-ml-3"
+            className="flex shrink-0 items-center gap-3 group"
           >
-            <div className="w-8 h-8 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center transition-transform group-hover:scale-105">
-              <GraduationCap className="w-5 h-5 text-violet-500" />
-            </div>
-            <span className="font-extrabold text-base sm:text-lg tracking-tight text-gray-900 dark:text-white">
+            <Logo className="h-11 w-11 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-[1.03]" />
+            <span className="font-extrabold text-base sm:text-lg tracking-tight text-gray-950 dark:text-white">
               LearnTube AI
             </span>
           </Link>
 
           {/* Desktop Nav / Dropdown */}
-          <div className="hidden lg:flex items-center gap-0.5">
+          <div className="hidden lg:flex flex-1 items-center justify-center gap-1">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
-              const disabled = !hasResult && item.href !== "/";
+              const disabled = !hasResult && item.href !== "/" && item.href !== "/about";
 
               return (
                 <Link
@@ -177,47 +179,59 @@ export default function Navbar() {
                   onClick={(e) => {
                     if (disabled) e.preventDefault();
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold tracking-tight transition-all
+                  className={`group relative flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold tracking-tight transition-all duration-200
                     ${
                       isActive
-                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                        ? "text-violet-700 dark:text-violet-300"
                         : disabled
                           ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-200"
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100/90 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100 hover:-translate-y-0.5"
                     }`}
                 >
                   <Icon className="w-4 h-4" />
                   {item.label}
+                  <span
+                    className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-opacity duration-200 ${
+                      isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    }`}
+                  />
+                  {isActive && (
+                    <motion.span
+                      layoutId="navbar-active-pill"
+                      className="absolute inset-0 -z-10 rounded-full bg-violet-500/10 dark:bg-violet-500/15"
+                    />
+                  )}
                 </Link>
               );
             })}
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 relative" ref={userMenuRef}>
+          <div className="ml-auto flex items-center gap-2 relative" ref={userMenuRef}>
             {/* User / Auth — desktop */}
             {!isLoading && (
               <div className="hidden lg:flex items-center">
                 {user ? (
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="w-8 h-8 rounded-full bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center hover:bg-violet-500/20 dark:hover:bg-violet-500/30 transition-all"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
                   >
-                    <span className="text-sm font-bold text-violet-600 dark:text-violet-400">
+                    <span className="text-sm font-bold">
                       {userInitial}
                     </span>
                   </button>
                 ) : (
-                  <div className="flex items-center gap-1 mr-1">
+                  <div className="flex items-center overflow-hidden rounded-full border border-gray-200 bg-white/80 shadow-sm dark:border-gray-700 dark:bg-slate-900/70">
                     <a
                       href="/login"
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     >
                       Sign in
                     </a>
+                    <span className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
                     <a
                       href="/login?tab=register"
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-violet-700 transition-all duration-200 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/20"
                     >
                       Register
                     </a>
@@ -234,18 +248,25 @@ export default function Navbar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -4, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-4 top-full mt-1.5 w-40 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden z-50"
+                  className="absolute right-4 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-gray-700 dark:bg-slate-900/95"
                   onClick={() => setUserMenuOpen(false)}
                 >
-                  <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                  <div className="border-b border-gray-100 px-3 py-2.5 dark:border-gray-800">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-600 dark:text-violet-300">
+                      Profile
+                    </p>
+                    <p className="mt-1 truncate text-xs font-medium text-gray-700 dark:text-gray-300">
                       {userName}
                     </p>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400">
+                    <KeyRound className="w-3.5 h-3.5 opacity-0" />
+                    Profile
                   </div>
                   <a
                     href="/api/auth/logout"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-600 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-gray-400 dark:hover:bg-red-900/20"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     Log out
@@ -261,11 +282,11 @@ export default function Navbar() {
                   <div className="relative" ref={historyMenuRef}>
                     <button
                       onClick={() => setHistoryOpen(!historyOpen)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                      className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3.5 py-2 text-xs font-medium text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:text-gray-950 dark:border-gray-700 dark:bg-slate-900/70 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     >
                       <History className="w-3.5 h-3.5" />
                       History
-                      <span className="text-[10px]">▼</span>
+                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${historyOpen ? "rotate-180" : ""}`} />
                     </button>
 
                     <AnimatePresence>
@@ -275,11 +296,11 @@ export default function Navbar() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -4, scale: 0.95 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute right-0 top-full mt-1.5 w-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden z-50"
+                          className="absolute right-0 top-full z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-gray-700 dark:bg-slate-900/95"
                         >
                           <div className="max-h-60 overflow-y-auto">
                             {historyLoading ? (
-                              <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
                                 Loading history...
                               </div>
                             ) : historyItems.length > 0 ? (
@@ -287,13 +308,13 @@ export default function Navbar() {
                                 <button
                                   key={item._id}
                                   onClick={() => handleHistorySelect(item._id)}
-                                  className="block w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                  className="block w-full px-3 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
                                 >
                                   <span className="block truncate">{item.title || item.url}</span>
                                 </button>
                               ))
                             ) : (
-                              <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
                                 No saved history yet
                               </div>
                             )}
@@ -303,34 +324,34 @@ export default function Navbar() {
                     </AnimatePresence>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="flex items-center overflow-hidden rounded-full border border-gray-200 bg-white/80 shadow-sm dark:border-gray-700 dark:bg-slate-900/70">
                     <button
                       onClick={() => {
                         if (viewingPrevious) toggleHistory();
                       }}
-                      className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
+                      className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium transition-all duration-200
                     ${
                       !viewingPrevious
-                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shadow-sm"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                        ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-950 dark:hover:text-white"
                     }`}
                     >
                       <History className="w-3.5 h-3.5" />
                       Latest
                     </button>
-                    <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
                     <button
                       onClick={() => {
                         if (!viewingPrevious && hasPrevious) toggleHistory();
                       }}
                       disabled={!hasPrevious}
-                      className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all
+                      className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium transition-all duration-200
                     ${
                       viewingPrevious
-                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 shadow-sm"
+                        ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
                         : !hasPrevious
                           ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                          : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-950 dark:hover:text-white"
                     }`}
                     >
                       <History className="w-3.5 h-3.5" />
@@ -342,7 +363,7 @@ export default function Navbar() {
                 {/* Clear session */}
                 <button
                   onClick={clearSession}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-gray-400 transition-all duration-200 hover:bg-red-50 hover:text-red-500 dark:text-gray-500 dark:hover:bg-red-900/20"
                   title="Clear all stored data"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -366,24 +387,25 @@ export default function Navbar() {
                   <div className="relative lg:hidden">
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="w-8 h-8 rounded-full bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center hover:bg-violet-500/20 dark:hover:bg-violet-500/30 transition-all"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
                     >
-                      <span className="text-sm font-bold text-violet-600 dark:text-violet-400">
+                      <span className="text-sm font-bold">
                         {userInitial}
                       </span>
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 lg:hidden">
+                  <div className="flex items-center overflow-hidden rounded-full border border-gray-200 bg-white/80 shadow-sm lg:hidden dark:border-gray-700 dark:bg-slate-900/70">
                     <a
                       href="/login"
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     >
                       Sign in
                     </a>
+                    <span className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
                     <a
                       href="/login?tab=register"
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-violet-700 transition-all duration-200 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/20"
                     >
                       Register
                     </a>
@@ -395,7 +417,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              className="lg:hidden rounded-xl p-2.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
               aria-label="Toggle navigation menu"
             >
               {mobileOpen ? (
@@ -416,7 +438,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="lg:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-lg"
+            className="lg:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 bg-white/95 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-gray-800 dark:bg-slate-900/95"
           >
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
@@ -435,13 +457,13 @@ export default function Navbar() {
                         setMobileOpen(false);
                       }
                     }}
-                    className={`flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium transition-all
+                    className={`flex items-center gap-2.5 rounded-2xl px-3 py-3 text-sm font-medium transition-all duration-200
                       ${
                         isActive
-                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                          ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
                           : disabled
                             ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-950 dark:hover:text-white"
                       }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -457,11 +479,11 @@ export default function Navbar() {
                     <div className="relative mx-3">
                       <button
                         onClick={() => setHistoryOpen(!historyOpen)}
-                        className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                        className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3.5 py-2 text-xs font-medium text-gray-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:text-gray-950 dark:border-gray-700 dark:bg-slate-900/70 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
                       >
                         <History className="w-3.5 h-3.5" />
                         History
-                        <span className="text-[10px]">▼</span>
+                        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${historyOpen ? "rotate-180" : ""}`} />
                       </button>
 
                       <AnimatePresence>
@@ -471,11 +493,11 @@ export default function Navbar() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -4, scale: 0.95 }}
                             transition={{ duration: 0.15 }}
-                            className="mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden"
+                            className="mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-gray-700 dark:bg-slate-900/95"
                           >
                             <div className="max-h-60 overflow-y-auto">
                               {historyLoading ? (
-                                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
                                   Loading history...
                                 </div>
                               ) : historyItems.length > 0 ? (
@@ -483,13 +505,13 @@ export default function Navbar() {
                                   <button
                                     key={item._id}
                                     onClick={() => handleHistorySelect(item._id)}
-                                    className="block w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                    className="block w-full px-3 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white"
                                   >
-                                    <span className="block truncate">{item.title || item.title || item.url}</span>
+                                    <span className="block truncate">{item.title || item.url}</span>
                                   </button>
                                 ))
                               ) : (
-                                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
                                   No saved history yet
                                 </div>
                               )}
@@ -499,7 +521,7 @@ export default function Navbar() {
                       </AnimatePresence>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden w-fit mx-3">
+                    <div className="flex items-center overflow-hidden rounded-full border border-gray-200 bg-white/80 shadow-sm w-fit mx-3 dark:border-gray-700 dark:bg-slate-900/70">
                       <button
                         onClick={() => {
                           if (viewingPrevious) {
@@ -507,16 +529,16 @@ export default function Navbar() {
                             setMobileOpen(false);
                           }
                         }}
-                        className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium transition-all duration-200 ${
                           !viewingPrevious
-                            ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
-                            : "text-gray-500 dark:text-gray-400"
+                            ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                            : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-950 dark:hover:text-white"
                         }`}
                       >
                         <History className="w-3.5 h-3.5" />
                         Latest
                       </button>
-                      <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
                       <button
                         onClick={() => {
                           if (!viewingPrevious && hasPrevious) {
@@ -525,12 +547,12 @@ export default function Navbar() {
                           }
                         }}
                         disabled={!hasPrevious}
-                        className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium transition-all duration-200 ${
                           viewingPrevious
-                            ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                            ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
                             : !hasPrevious
                               ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                              : "text-gray-500 dark:text-gray-400"
+                              : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-950 dark:hover:text-white"
                         }`}
                       >
                         <History className="w-3.5 h-3.5" />
@@ -544,7 +566,7 @@ export default function Navbar() {
                       clearSession();
                       setMobileOpen(false);
                     }}
-                    className="flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all w-full"
+                    className="flex items-center gap-2.5 rounded-2xl px-3 py-3 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 w-full"
                   >
                     <Trash2 className="w-4 h-4" />
                     Clear all data
