@@ -74,32 +74,42 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     const wasLoggedIn = prevUserRef.current !== null;
     const nowLoggedIn = user !== null;
 
-    // Login transition: clear in-memory state + guest localStorage
-    if (!wasLoggedIn && nowLoggedIn) {
-      setCurrentResult(null);
-      setPreviousResult(null);
-      setViewingPrevious(false);
-      saveToLS(LS_CURRENT, null);
-      saveToLS(LS_PREVIOUS, null);
-    }
+    let cancelled = false;
 
-    // Initial hydration (only runs once, before hydrated is true)
-    if (!hydrated) {
-      if (nowLoggedIn) {
-        // Logged in — clear stale guest localStorage
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      // Login transition: clear in-memory state + guest localStorage
+      if (!wasLoggedIn && nowLoggedIn) {
+        setCurrentResult(null);
+        setPreviousResult(null);
+        setViewingPrevious(false);
         saveToLS(LS_CURRENT, null);
         saveToLS(LS_PREVIOUS, null);
-      } else {
-        // Guest — restore persisted session
-        const current = loadFromLS(LS_CURRENT);
-        if (current) setCurrentResult(current.result);
-        const previous = loadFromLS(LS_PREVIOUS);
-        if (previous) setPreviousResult(previous.result);
       }
-      setHydrated(true);
-    }
+
+      // Initial hydration (only runs once, before hydrated is true)
+      if (!hydrated) {
+        if (nowLoggedIn) {
+          // Logged in — clear stale guest localStorage
+          saveToLS(LS_CURRENT, null);
+          saveToLS(LS_PREVIOUS, null);
+        } else {
+          // Guest — restore persisted session
+          const current = loadFromLS(LS_CURRENT);
+          if (current) setCurrentResult(current.result);
+          const previous = loadFromLS(LS_PREVIOUS);
+          if (previous) setPreviousResult(previous.result);
+        }
+        setHydrated(true);
+      }
+    });
 
     prevUserRef.current = user;
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading, hydrated]);
 
   // Exposed result is whichever we're viewing (null until hydrated to avoid SSR mismatch)
