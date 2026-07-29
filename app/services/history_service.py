@@ -2,70 +2,77 @@ import asyncio
 import json
 import logging
 import os
-import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-MAX_SESSIONS = 100
-ID_BYTES = 4
 HISTORY_PATH = Path(__file__).resolve().parents[2] / "data" / "history.json"
 
 _lock = asyncio.Lock()
 
 
-async def load() -> dict:
+async def _load() -> dict | None:
+    """Read the stored dict { current, previous }, migrating old format."""
     try:
         text = HISTORY_PATH.read_text()
         data = json.loads(text)
         if not isinstance(data, dict):
             raise ValueError("root not a dict")
+        # Migrate from old single-record format { url, result, ... }
+        if "url" in data and "current" not in data:
+            data = {"current": data, "previous": None}
+            await _save(data)
         return data
     except FileNotFoundError:
-        return {}
+        return None
     except (json.JSONDecodeError, ValueError):
-        corrupt = HISTORY_PATH.with_name(f"history.json.corrupt.{datetime.now():%Y%m%d%H%M%S}")
+        corrupt = HISTORY_PATH.with_name(
+            f"history.json.corrupt.{datetime.now():%Y%m%d%H%M%S}"
+        )
         HISTORY_PATH.rename(corrupt)
-        logger.warning("corrupt history.json renamed to %s; starting fresh", corrupt.name)
-        return {}
+        logger.warning("corrupt history.json renamed to %s", corrupt.name)
+        return None
 
 
-async def save(data: dict) -> None:
+async def _save(data: dict) -> None:
     HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
     tmp = HISTORY_PATH.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(data, indent=2))
     os.replace(tmp, HISTORY_PATH)
 
 
-def _generate_id(existing: set[str]) -> str:
-    for _ in range(10):
-        sid = secrets.token_hex(ID_BYTES)
-        if sid not in existing:
-            return sid
-    raise RuntimeError("failed to generate unique session id after 10 attempts")
-
-
-async def append(url: str, result: dict) -> str:
+async def save_last(url: str, result: dict) -> dict:
+    """Push current → previous, then store the new session as current."""
+    record = {
+        "url": url,
+        "analyzed_at": datetime.now(timezone.utc).isoformat(),
+        "result": result,
+    }
     async with _lock:
-        data = await load()
-        existing_ids = set(data.keys())
-        sid = _generate_id(existing_ids)
-        data[sid] = {
-            "id": sid,
-            "url": url,
-            "analyzed_at": datetime.now(timezone.utc).isoformat(),
-            "result": result,
-        }
-        # FIFO trim: keep the MAX_SESSIONS most recent by analyzed_at
-        if len(data) > MAX_SESSIONS:
-            sorted_items = sorted(data.items(), key=lambda kv: kv[1]["analyzed_at"], reverse=True)
-            data = dict(sorted_items[:MAX_SESSIONS])
-        await save(data)
-        return sid
+        existing = await _load()
+        if existing:
+            existing["previous"] = existing.get("current")
+            existing["current"] = record
+        else:
+            existing = {"current": record, "previous": None}
+        await _save(existing)
+    return record
 
 
-async def get(session_id: str) -> dict | None:
+async def get_current() -> dict | None:
+    """Return the current session record, or None."""
     async with _lock:
-        data = await load()
-        return data.get(session_id)
+        data = await _load()
+        if data and data.get("current"):
+            return data["current"]
+        return None
+
+
+async def get_previous() -> dict | None:
+    """Return the previous session record, or None."""
+    async with _lock:
+        data = await _load()
+        if data and data.get("previous"):
+            return data["previous"]
+        return None

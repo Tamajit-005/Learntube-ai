@@ -7,7 +7,6 @@ from app.services.notes_service import generate_notes
 from app.services.quiz_service import generate_mcqs
 from app.services.flashcard_service import generate_flashcards
 from app.services.interview_service import generate_interview_questions
-from app.services.summary_service import generate_timestamps
 from app.services.formula_service import extract_formulas
 async def process_youtube_video(url):
 
@@ -40,13 +39,10 @@ async def process_youtube_video(url):
         formulas,
     ) = await asyncio.gather(*tasks)
 
-    timestamps = generate_timestamps(transcript)
-
     return {
         "notes": notes,
         "quizzes": quizzes,
         "flashcards": flashcards,
         "interview_questions": interview_questions,
-        "timestamps": timestamps,
         "formulas": formulas,
     }

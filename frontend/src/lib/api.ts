@@ -80,11 +80,31 @@ export async function analyzeVideo(url: string): Promise<AnalyzeResponse> {
   return response.json();
 }
 
-export async function getSession(id: string): Promise<SessionRecord> {
+export async function getCurrentHistory(): Promise<SessionRecord> {
   let response: Response;
 
   try {
-    response = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
+    response = await fetch(`${API_BASE}/history/current`);
+  } catch {
+    throw {
+      type: "network",
+      message: "Could not connect to the server. Make sure the backend is running on port 8000.",
+    } as ApiError;
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw parseErrorMessage(text);
+  }
+
+  return response.json();
+}
+
+export async function getPreviousHistory(): Promise<SessionRecord> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE}/history/previous`);
   } catch {
     throw {
       type: "network",

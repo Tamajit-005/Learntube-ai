@@ -26,7 +26,7 @@ export default function EmptyState() {
         variants={staggerItem}
       >
         Paste a YouTube URL above to get AI-generated notes, flashcards, quizzes,
-        interview questions, timestamps, and key formulas from any educational video.
+        interview questions, and key formulas from any educational video.
       </motion.p>
     </motion.div>
   );

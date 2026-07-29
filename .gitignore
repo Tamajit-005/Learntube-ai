@@ -57,8 +57,9 @@ coverage/
 # Vercel
 .vercel
 
-# Local data (history.json, etc.)
-data/
+# Design specs
+docs/superpowers/specs/
+/docs/superpowers/specs/
 
-# Design documents
-docs/superpowers/specs/2026-06-07-history-feature-design.md
+# Local data (history.json.)
+data/

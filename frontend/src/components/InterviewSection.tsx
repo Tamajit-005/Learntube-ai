@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Briefcase, ChevronDown, Lightbulb, Target, Star } from "lucide-react";
+import { ChevronDown, Lightbulb, Target, Star } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
@@ -176,10 +176,6 @@ export default function InterviewSection({ content }: InterviewSectionProps) {
 
     return (
       <div className="card">
-        <div className="flex items-center gap-2 mb-4">
-          <Briefcase className="w-5 h-5 text-violet-500" />
-          <h2 className="text-lg font-semibold">Interview Questions</h2>
-        </div>
         <div className="prose prose-sm dark:prose-invert max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatted}</ReactMarkdown>
         </div>
@@ -206,12 +202,6 @@ export default function InterviewSection({ content }: InterviewSectionProps) {
 
   return (
     <div className="card">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <Briefcase className="w-5 h-5 text-violet-500" />
-        <h2 className="text-lg font-semibold">Interview Questions</h2>
-      </div>
-
       {/* Level Tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {sections.map((section) => (

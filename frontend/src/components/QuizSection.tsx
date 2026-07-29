@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { HelpCircle, CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { staggerContainer, staggerItem } from "@/components/AnimatedPage";
 import type { QuizQuestion } from "@/types";
 
@@ -94,11 +94,6 @@ export default function QuizSection({ content }: QuizSectionProps) {
 
   return (
     <div className="card">
-      <div className="flex items-center gap-2 mb-4">
-        <HelpCircle className="w-5 h-5 text-violet-500" />
-        <h2 className="text-lg font-semibold">Quiz</h2>
-      </div>
-
       <motion.div
         className="space-y-6"
         variants={staggerContainer}

@@ -31,19 +31,30 @@ async def analyze_video(url: str = Query(..., min_length=1)):
             },
         )
     try:
-        session_id = await history_service.append(url, result)
-        return {"session_id": session_id, "result": result}
+        await history_service.save_last(url, result)
     except Exception:
         # Persistence failure should not block the user from seeing results
-        return {"session_id": None, "result": result}
+        pass
+    return {"result": result}
 
 
-@router.get("/sessions/{session_id}")
-async def get_session(session_id: str):
-    record = await history_service.get(session_id)
+@router.get("/history/current")
+async def get_current_history():
+    record = await history_service.get_current()
     if record is None:
         raise HTTPException(
             status_code=404,
-            detail={"type": "not_found", "message": "Session not found"},
+            detail={"type": "not_found", "message": "No history found"},
+        )
+    return record
+
+
+@router.get("/history/previous")
+async def get_previous_history():
+    record = await history_service.get_previous()
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"type": "not_found", "message": "No previous history"},
         )
     return record
