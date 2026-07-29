@@ -162,11 +162,6 @@ export default function Home() {
           </AnimatedPage>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 dark:border-gray-800 py-4">
-        <p className="text-xs text-center text-gray-400">LearnTube AI</p>
-      </footer>
     </div>
   );
 }

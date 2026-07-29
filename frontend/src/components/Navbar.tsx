@@ -192,7 +192,7 @@ export default function Navbar() {
                   <Icon className="w-4 h-4" />
                   {item.label}
                   <span
-                    className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-opacity duration-200 ${
+                    className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 transition-opacity duration-200 ${
                       isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     }`}
                   />
