@@ -200,20 +200,30 @@ export default function AboutPage() {
 								transition={{ duration: 0.5, delay: 0.24, ease: "easeOut" }}
 								className="mt-7 flex flex-wrap gap-3"
 							>
-								<Link
-									href="/"
-									className="inline-flex items-center justify-center rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+								<motion.div
+									whileHover={{ scale: 1.04 }}
+									transition={{ type: "spring", stiffness: 300, damping: 15 }}
 								>
-									Analyze a Video
-								</Link>
-								<button
-									type="button"
-									aria-label="GitHub repository coming soon"
-									title="GitHub repository coming soon"
-									className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-violet-400 dark:hover:text-violet-300"
+									<Link
+										href="/"
+										className="inline-flex items-center justify-center rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+									>
+										Analyze a Video
+									</Link>
+								</motion.div>
+								<motion.div
+									whileHover={{ scale: 1.04 }}
+									transition={{ type: "spring", stiffness: 300, damping: 15 }}
 								>
-									GitHub Repository
-								</button>
+									<a
+										href="https://github.com/Tamajit-005/Learntube-ai"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-violet-400 dark:hover:text-violet-300"
+									>
+										GitHub Repository
+									</a>
+								</motion.div>
 							</motion.div>
 						</div>
 
@@ -221,6 +231,7 @@ export default function AboutPage() {
 							initial={{ opacity: 0, y: 16 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.5, delay: 0.12, ease: "easeOut" }}
+							whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 15 } }}
 							className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
 						>
 							<div className="flex items-center gap-4">
@@ -237,7 +248,7 @@ export default function AboutPage() {
 								</div>
 							</div>
 
-							<div className="mt-6 space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+							<motion.div whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 300, damping: 15 } }} className="mt-6 space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
 								{[
 									"Convert lectures into clear study assets.",
 									"Practice with quizzes and flashcards.",
@@ -248,12 +259,13 @@ export default function AboutPage() {
 										<span>{item}</span>
 									</div>
 								))}
-							</div>
+							</motion.div>
 
 							<div className="mt-6 grid gap-3 sm:grid-cols-2">
 								{stats.map((stat) => (
-									<div
+									<motion.div
 										key={stat.label}
+										whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 15 } }}
 										className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"
 									>
 										<p className="text-2xl font-semibold text-slate-950 dark:text-white">
@@ -262,7 +274,7 @@ export default function AboutPage() {
 										<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
 											{stat.label}
 										</p>
-									</div>
+									</motion.div>
 								))}
 							</div>
 						</motion.aside>
@@ -321,6 +333,7 @@ export default function AboutPage() {
 									whileInView={{ opacity: 1, y: 0 }}
 									viewport={{ once: true }}
 									transition={{ duration: 0.4, delay: i * 0.06, ease: "easeOut" }}
+									whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 15 } }}
 									className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
 								>
 									<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900 dark:text-violet-300">
@@ -367,6 +380,7 @@ export default function AboutPage() {
 									whileInView={{ opacity: 1, y: 0 }}
 									viewport={{ once: true }}
 									transition={{ duration: 0.4, delay: index * 0.05, ease: "easeOut" }}
+										whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 15 } }}
 									className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/50"
 								>
 									<div className="flex items-start gap-4">
@@ -422,6 +436,7 @@ export default function AboutPage() {
 									whileInView={{ opacity: 1, y: 0 }}
 									viewport={{ once: true }}
 									transition={{ duration: 0.3, ease: "easeOut" }}
+										whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 15 } }}
 									className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-4 text-sm font-medium text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
 								>
 									<span className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900 dark:text-violet-300">
@@ -460,6 +475,7 @@ export default function AboutPage() {
 								whileInView={{ opacity: 1, y: 0 }}
 								viewport={{ once: true }}
 								transition={{ duration: 0.4, delay: index * 0.08, ease: "easeOut" }}
+									whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300, damping: 15 } }}
 								className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800/50"
 							>
 								<div className="flex items-start gap-4">
