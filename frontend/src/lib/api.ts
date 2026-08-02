@@ -1,6 +1,6 @@
 import type { AnalyzeResponse, SessionRecord } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://learntube-ai.onrender.com";
 
 export interface ApiError {
   type: "no_transcript" | "rate_limit" | "server_error" | "network" | "not_found" | "invalid_url";
