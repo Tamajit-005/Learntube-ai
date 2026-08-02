@@ -14,7 +14,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://learntube-ai.onrender.com"],
+    allow_origins=["http://localhost:3000", "https://learntube-6x70sja0w-tamajitsaha05-6876s-projects.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
