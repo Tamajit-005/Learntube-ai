@@ -14,7 +14,7 @@ app = FastAPI(
 
 allowed_origins = [
     origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", "https://learntube-ai.onrender.com").split(",")
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,https://learntube-ai-weld.vercel.app").split(",")
     if origin.strip()
 ]
 
