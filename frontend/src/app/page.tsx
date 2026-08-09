@@ -7,7 +7,6 @@ import {
   Clock,
   VideoOff,
   RefreshCw,
-  FolderOpen,
   Loader2,
 } from "lucide-react";
 import { useAnalysis } from "@/context/AnalysisContext";
@@ -32,17 +31,12 @@ const ERROR_CONFIG: Record<
   network: {
     icon: <WifiOff className="w-8 h-8" />,
     title: "Connection error",
-    hint: "Make sure the backend server is running on port 8000.",
+    hint: "Couldn't reach the analysis service. Please try again.",
   },
   server_error: {
     icon: <AlertTriangle className="w-8 h-8" />,
     title: "Something went wrong",
     hint: "Try a shorter or different video.",
-  },
-  not_found: {
-    icon: <FolderOpen className="w-8 h-8" />,
-    title: "No history found",
-    hint: "Analyze a video first to create a session.",
   },
   invalid_url: {
     icon: <VideoOff className="w-8 h-8" />,
