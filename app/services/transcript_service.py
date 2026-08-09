@@ -1,5 +1,6 @@
 import html
 import json
+import os
 import re
 
 import httpx
@@ -24,6 +25,11 @@ _CLIENT_CONTEXTS = [
 ]
 _WEB_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 _EN_LANGS = {"en", "en-IN", "en-US", "en-GB"}
+
+# Optional Cloudflare Worker proxy. Render's egress IPs are blocked by YouTube,
+# so when TRANSCRIPT_PROXY_URL is set we ask the Worker (running on Cloudflare
+# IPs) to fetch the transcript for us, falling back to direct attempts.
+_PROXY_URL = os.getenv("TRANSCRIPT_PROXY_URL", "").strip()
 
 
 def extract_video_id(url: str) -> str | None:
@@ -82,6 +88,22 @@ async def get_transcript(url: str):
         raise ValueError("Could not extract a valid YouTube video ID from the URL.")
 
     async with httpx.AsyncClient(timeout=30.0) as client:
+        # Strategy 0: Cloudflare Worker proxy (avoids Render's blocked IPs)
+        if _PROXY_URL:
+            try:
+                proxy_resp = await client.post(
+                    _PROXY_URL,
+                    json={"url": url},
+                    timeout=30.0,
+                )
+                if proxy_resp.status_code == 200:
+                    payload = proxy_resp.json()
+                    segments = payload.get("transcript")
+                    if payload.get("ok") and segments:
+                        return segments
+            except Exception:
+                pass
+
         # Strategy 1: innertube player API across app client contexts
         tracks = []
         for context, ua in _CLIENT_CONTEXTS:
