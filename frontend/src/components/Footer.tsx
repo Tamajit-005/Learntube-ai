@@ -17,7 +17,6 @@ const footerLinks = [
     links: [
       { href: "/", label: "Home" },
       { href: "/about", label: "About" },
-      { href: "/login", label: "Sign In" },
     ],
   },
 ];
