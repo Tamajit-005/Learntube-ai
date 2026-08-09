@@ -209,35 +209,17 @@ export default function Navbar() {
 
           {/* Right section */}
           <div className="ml-auto flex items-center gap-2 relative" ref={userMenuRef}>
-            {/* User / Auth — desktop */}
-            {!isLoading && (
+            {/* User avatar — desktop */}
+            {!isLoading && user && (
               <div className="hidden xl:flex items-center">
-                {user ? (
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
-                  >
-                    <span className="text-sm font-bold">
-                      {userInitial}
-                    </span>
-                  </button>
-                ) : (
-                  <div className="flex items-center overflow-hidden rounded-full border border-gray-200 bg-white/80 shadow-sm dark:border-gray-700 dark:bg-slate-900/70">
-                    <a
-                      href="/login"
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                    >
-                      Sign in
-                    </a>
-                    <span className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <a
-                      href="/login?tab=register"
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-violet-700 transition-all duration-200 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/20"
-                    >
-                      Register
-                    </a>
-                  </div>
-                )}
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
+                >
+                  <span className="text-sm font-bold">
+                    {userInitial}
+                  </span>
+                </button>
               </div>
             )}
 
@@ -393,37 +375,17 @@ export default function Navbar() {
             )}
 
             {/* Mobile avatar */}
-            {!isLoading && (
-              <>
-                {user ? (
-                  <div className="relative xl:hidden">
-                    <button
-                      onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
-                    >
-                      <span className="text-sm font-bold">
-                        {userInitial}
-                      </span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center overflow-hidden rounded-full border border-gray-200 bg-white/80 shadow-sm lg:hidden dark:border-gray-700 dark:bg-slate-900/70">
-                    <a
-                      href="/login"
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                    >
-                      Sign in
-                    </a>
-                    <span className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-                    <a
-                      href="/login?tab=register"
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-violet-700 transition-all duration-200 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/20"
-                    >
-                      Register
-                    </a>
-                  </div>
-                )}
-              </>
+            {!isLoading && user && (
+              <div className="relative xl:hidden">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/15 bg-violet-500/10 text-violet-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:hover:bg-violet-500/25"
+                >
+                  <span className="text-sm font-bold">
+                    {userInitial}
+                  </span>
+                </button>
+              </div>
             )}
 
             {/* Mobile Menu Button */}
@@ -440,6 +402,35 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {/* Mobile tab strip — always visible on small screens, no hamburger step */}
+        <div className="lg:hidden flex items-center gap-1 overflow-x-auto -mx-4 px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            const disabled = !hasResult && item.href !== "/" && item.href !== "/about";
+
+            return (
+              <Link
+                key={item.href}
+                href={disabled ? "#" : item.href}
+                onClick={(e) => {
+                  if (disabled) e.preventDefault();
+                }}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold tracking-tight transition-all duration-200 ${
+                  isActive
+                    ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                    : disabled
+                      ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100/90 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Mobile Menu (animated dropdown) */}
@@ -453,36 +444,6 @@ export default function Navbar() {
             className="lg:hidden absolute top-full left-0 right-0 overflow-hidden border-t border-gray-200 bg-white/95 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-gray-800 dark:bg-slate-900/95"
           >
             <div className="px-4 py-3 space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
-                const disabled = !hasResult && item.href !== "/";
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={disabled ? "#" : item.href}
-                    onClick={(e) => {
-                      if (disabled) {
-                        e.preventDefault();
-                      } else {
-                        setMobileOpen(false);
-                      }
-                    }}
-                    className={`flex items-center gap-2.5 rounded-2xl px-3 py-3 text-sm font-medium transition-all duration-200
-                      ${
-                        isActive
-                          ? "bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
-                          : disabled
-                            ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-950 dark:hover:text-white"
-                      }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
               {user && (
                 <>
                   <hr className="border-gray-200 dark:border-gray-700 my-2" />
