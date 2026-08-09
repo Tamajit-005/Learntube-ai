@@ -9,9 +9,9 @@ export async function GET(req: NextRequest) {
     const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
     session.destroy();
 
-    return NextResponse.redirect(new URL("/", process.env.APP_BASE_URL || "https://learntube-ai.onrender.com"), { status: 303 });
+    return NextResponse.redirect(new URL("/", process.env.APP_BASE_URL || "http://localhost:3000"), { status: 303 });
   } catch (error) {
     console.error("Logout error:", error);
-    return NextResponse.redirect(new URL("/", process.env.APP_BASE_URL || "https://learntube-ai.onrender.com"), { status: 303 });
+    return NextResponse.redirect(new URL("/", process.env.APP_BASE_URL || "http://localhost:3000"), { status: 303 });
   }
 }

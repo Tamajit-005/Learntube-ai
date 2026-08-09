@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       },
       {
         upsert: true,
-        new: true,
+        returnDocument: "after",
         setDefaultsOnInsert: true,
       }
     );
