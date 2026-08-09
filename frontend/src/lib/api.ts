@@ -6,48 +6,17 @@ export interface ApiError {
 }
 
 function parseErrorMessage(body: string): ApiError {
-  // Try structured JSON error first (e.g. from HTTPException with detail)
-  const isJson = body.trim().startsWith("{") || body.trim().startsWith("[");
-  if (isJson) {
-    try {
-      const data = JSON.parse(body);
-      if (data?.detail?.type) {
-        return {
-          type: data.detail.type as ApiError["type"],
-          message: data.detail.message || body,
-        };
-      }
-    } catch {
-      // not valid JSON, fall through to plain-text checks
-    }
-  }
-
-  // Plain-text heuristic matching for non-structured errors
-  if (!isJson) {
-    if (body.includes("TranscriptsDisabled") || body.includes("subtitles are disabled")) {
+  // The analyze route always returns structured JSON errors { detail: { type, message } }.
+  try {
+    const data = JSON.parse(body);
+    if (data?.detail?.type) {
       return {
-        type: "no_transcript",
-        message: "This video either doesn't have captions enabled or isn't available. Try the same video again after 24 hours.",
+        type: data.detail.type as ApiError["type"],
+        message: data.detail.message || body,
       };
     }
-    if (body.includes("NoTranscriptFound") || body.includes("No transcripts were found")) {
-      return {
-        type: "no_transcript",
-        message: "No English transcript found for this video. The video may be in a different language or captions are not available.",
-      };
-    }
-    if (body.includes("rate limit") || body.includes("Rate limit") || body.includes("quota")) {
-      return {
-        type: "rate_limit",
-        message: "The AI service is temporarily rate-limited. Please wait a moment and try again.",
-      };
-    }
-    if (body.includes("request_too_large") || body.includes("too large")) {
-      return {
-        type: "server_error",
-        message: "The video is too long to process. Try a shorter video.",
-      };
-    }
+  } catch {
+    // not JSON — fall through to the generic fallback
   }
 
   return {
