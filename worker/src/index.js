@@ -103,7 +103,7 @@ async function getTranscript(videoId) {
   }
 
   if (!tracks.length) {
-    throw new Error("This video doesn't have captions enabled or is unavailable.");
+    throw new Error("This video either doesn't have captions enabled or isn't available. Try the same video again after 24 hours.");
   }
 
   const track = tracks.find((t) => EN_LANGS.has(t.languageCode)) || tracks[0];

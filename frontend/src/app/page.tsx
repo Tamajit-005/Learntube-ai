@@ -32,7 +32,7 @@ const ERROR_CONFIG: Record<
   network: {
     icon: <WifiOff className="w-8 h-8" />,
     title: "Connection error",
-    hint: "Make sure the backend server is running on port 8000.",
+    hint: "Make sure the backend server is running.",
   },
   server_error: {
     icon: <AlertTriangle className="w-8 h-8" />,

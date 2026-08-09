@@ -1,6 +1,4 @@
-import type { AnalyzeResponse, SessionRecord } from "@/types";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://learntube-ai-vvcb.onrender.com";
+import type { AnalyzeResponse } from "@/types";
 
 export interface ApiError {
   type: "no_transcript" | "rate_limit" | "server_error" | "network" | "not_found" | "invalid_url";
@@ -29,7 +27,7 @@ function parseErrorMessage(body: string): ApiError {
     if (body.includes("TranscriptsDisabled") || body.includes("subtitles are disabled")) {
       return {
         type: "no_transcript",
-        message: "This video doesn't have captions enabled. Try a different video that includes subtitles or closed captions.",
+        message: "This video either doesn't have captions enabled or isn't available. Try the same video again after 24 hours.",
       };
     }
     if (body.includes("NoTranscriptFound") || body.includes("No transcripts were found")) {
@@ -62,53 +60,13 @@ export async function analyzeVideo(url: string): Promise<AnalyzeResponse> {
   let response: Response;
 
   try {
-    response = await fetch(`${API_BASE}/analyze?url=${encodeURIComponent(url)}`, {
+    response = await fetch(`/api/analyze?url=${encodeURIComponent(url)}`, {
       method: "POST",
     });
   } catch {
     throw {
       type: "network",
-      message: "Could not connect to the server. Make sure the backend is running on port 8000.",
-    } as ApiError;
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw parseErrorMessage(text);
-  }
-
-  return response.json();
-}
-
-export async function getCurrentHistory(): Promise<SessionRecord> {
-  let response: Response;
-
-  try {
-    response = await fetch(`${API_BASE}/history/current`);
-  } catch {
-    throw {
-      type: "network",
-      message: "Could not connect to the server. Make sure the backend is running on port 8000.",
-    } as ApiError;
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw parseErrorMessage(text);
-  }
-
-  return response.json();
-}
-
-export async function getPreviousHistory(): Promise<SessionRecord> {
-  let response: Response;
-
-  try {
-    response = await fetch(`${API_BASE}/history/previous`);
-  } catch {
-    throw {
-      type: "network",
-      message: "Could not connect to the server. Make sure the backend is running on port 8000.",
+      message: "Could not connect to the server. Please try again.",
     } as ApiError;
   }
 
