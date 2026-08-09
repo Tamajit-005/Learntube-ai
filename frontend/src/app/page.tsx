@@ -7,7 +7,6 @@ import {
   Clock,
   VideoOff,
   RefreshCw,
-  FolderOpen,
   Loader2,
 } from "lucide-react";
 import { useAnalysis } from "@/context/AnalysisContext";
